@@ -3,9 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import useCartStore from "@/stores/cartStore";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-const PaymentForm = () => {
+const PaymentForm = ({ shippingForm }: { shippingForm: any }) => {
   const {
     register,
     handleSubmit,
@@ -15,9 +18,59 @@ const PaymentForm = () => {
   });
 
   const router = useRouter();
+  const { data: session } = useSession();
+  const { cart, clearCart } = useCartStore();
 
-  const handlePaymentForm: SubmitHandler<PaymentFormInputs> = (data) => {
-    
+  const handlePaymentForm: SubmitHandler<PaymentFormInputs> = async (data) => {
+    if (!session?.user) {
+      toast.error("Please sign in to complete your order");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const totalAmount = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item._id || item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor,
+          image: item.images[item.selectedColor],
+        })),
+        shippingAddress: shippingForm,
+        paymentInfo: {
+          cardHolder: data.cardHolder,
+          // Don't store sensitive payment info in production
+          cardNumber: "****" + data.cardNumber.slice(-4),
+          expirationDate: data.expirationDate,
+        },
+        totalAmount,
+      };
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (response.ok) {
+        const order = await response.json();
+        clearCart();
+        toast.success("Order placed successfully!");
+        router.push(`/orders/${order._id}`);
+      } else {
+        throw new Error("Failed to place order");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order. Please try again.");
+    }
   };
 
   return (

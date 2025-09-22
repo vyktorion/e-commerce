@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export type ProductType = {
-  id: string | number;
+  _id?: string;
+  id?: string | number;
   name: string;
   shortDescription: string;
   description: string;
@@ -9,6 +10,11 @@ export type ProductType = {
   sizes: string[];
   colors: string[];
   images: Record<string, string>;
+  category?: string;
+  inStock?: boolean;
+  featured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ProductsType = ProductType[];
@@ -61,4 +67,27 @@ export type CartStoreActionsType = {
   addToCart: (product: CartItemType) => void;
   removeFromCart: (product: CartItemType) => void;
   clearCart: () => void;
+};
+
+export type UserType = {
+  _id: string;
+  name: string;
+  email: string;
+  image?: string;
+  role: 'user' | 'admin';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrderType = {
+  _id: string;
+  userId: string;
+  items: CartItemType[];
+  shippingAddress: ShippingFormInputs;
+  paymentInfo: Partial<PaymentFormInputs>;
+  totalAmount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  createdAt: string;
+  updatedAt: string;
 };

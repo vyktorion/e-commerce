@@ -30,6 +30,9 @@ const Navbar = () => {
         <ShoppingCartIcon/>
         <Link href="/login">Sign in</Link>
       </div>
+            <Link href="/orders" className="text-sm text-gray-600 hover:text-gray-800">
+              Orders
+            </Link>
     </nav>
   );
 };
